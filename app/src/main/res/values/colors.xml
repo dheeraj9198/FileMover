@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background_color">#FFFFE6</color>
+    <color name="home_background">#000000</color>
+    <color name="text_color">#FFFAF0</color>
+    <color name="loginBackgroundColor">#DAA520</color>
+    <color name="exam_page_background_color">#F7F8F8</color>
+    <color name="black">#ff000000</color>
+    <color name="black_transparent_dark">#86000000</color>
+    <color name="black_transparent_light">#46000000</color>
+    <color name="orange">#FFFAA51C</color>
+    <color name="gray">#FF616161</color>
+    <color name="white">#FFFFFF</color>
+    <color name="white_transparent">#66FFFFFF</color>
+    <color name="gray_font">#FF6A6A6A</color>
+    <color name="gray_filter_background">#D3D3D3</color>
+    <color name="profile_image_color">#D3D3D3</color>
+    <color name="apricot">#FDE4BA</color>
+    <color name="light_gray">#D3D3D3</color>
+    <color name="very_light_gray">#FFf9f9f9</color>
+    <color name="font_shadow_gray">#FFDEDEDE</color>
+    <color name="green">#009900</color>
+    <color name="border_gray">#e7e7e7</color>
+    <color name="supermoney_background_green">#009788</color>
+    <color name="red">#FFFF0714</color>
+
+
+    <!--Floating button resources-->
+    <color name="black_semi_transparent">#B2000000</color>
+    <color name="background">#e5e5e5</color>
+    <color name="half_black">#808080</color>
+    <color name="white_f">#fafafa</color>
+    <color name="white_f_pressed">#f1f1f1</color>
+    <color name="material_cyan">#00BCD4</color>
+    <color name="material_cyan_pressed">#00838F</color>
+    <color name="nav_child_bg">#f7f7f7</color>
+    <color name="mild_green">#54C571</color>
+    <color name="course_page_animation_b_g">#b4000000</color>
+    <color name="mild_red">#FF4D4D</color>
+
+</resources>
