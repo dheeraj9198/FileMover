@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.Locale;
 
 public class MainActivity extends ActionBarActivity {
-    private static final String ext = "Android/data/mebeerhu.dheeraj.sachan.filemover/files";
+    private static final String ext = "/Android/data/mebeerhu.dheeraj.sachan.filemover/files";
     private ListView listView;
 
     @Override
