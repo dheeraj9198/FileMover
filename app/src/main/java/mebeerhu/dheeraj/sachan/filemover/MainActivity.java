@@ -6,6 +6,7 @@ import android.os.Environment;
 import android.os.StatFs;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -57,12 +58,11 @@ public class MainActivity extends ActionBarActivity {
         new AsyncTask<Void, Void, Boolean>() {
 
             String fileString = "" ;
+
             @Override
             protected Boolean doInBackground(Void... params) {
-                File file1 = getApplicationContext().getExternalFilesDir(null);
-/*
+                File file2 = getApplicationContext().getExternalFilesDir(null);
                 File file1 = new File("/storage/extSdCard/Android/data/mebeerhu.dheeraj.sachan.filemover/files/dheeraja.txt");
-*/
                 fileString = file1.getAbsolutePath();
                 OutputStream outStream = null;
                 try {
@@ -199,6 +199,14 @@ public class MainActivity extends ActionBarActivity {
             }
         }
 
+
+        for (StorageOption storageOption1 : storageOptionHashSetFinal){
+            if(storageOption1.getName().equals(EXTERNAL_STORAGE)){
+                String location = storageOption1.getLocation();
+                storageOption1.setLocation(location+File.separator+"Android"+File.separator+"data"+File.separator+context.getPackageName()+File.separator+"files");
+            }
+        }
+
         return storageOptionHashSetFinal;
 
     }
@@ -214,6 +222,10 @@ public class MainActivity extends ActionBarActivity {
             this.location = location;
             this.freeSpace = freeSpace;
             this.totalSpace = totalSpace;
+        }
+
+        public void setLocation(String location) {
+            this.location = location;
         }
 
         public String getLocation() {
