@@ -1,9 +1,17 @@
 package mebeerhu.dheeraj.sachan.filemover;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentSender;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.StatFs;
+import android.provider.Settings;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -26,15 +34,41 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 
-public class MainActivity extends ActionBarActivity {
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.LocationSettingsResult;
+import com.google.android.gms.location.LocationSettingsStatusCodes;
+
+public class MainActivity extends ActionBarActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+    public static final String TAG = MainActivity.class.getSimpleName();
     private static final String ext = "/Android/data/mebeerhu.dheeraj.sachan.filemover/files";
+    private static final int REQUEST_CHECK_SETTINGS = 100;
     private ListView listView;
+
+    private GoogleApiClient mGoogleApiClient;
+
+    protected void buildGoogleApiClient() {
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+        mGoogleApiClient.connect();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        buildGoogleApiClient();
         setContentView(R.layout.activity_main);
         listView = (ListView) findViewById(R.id.list_view);
         final ArrayAdapter<StorageOption> storageOptionArrayAdapter = new ArrayAdapter<StorageOption>(getApplicationContext(), R.layout.simple_view, new ArrayList<StorageOption>(getStorageOptions(getApplicationContext()))) {
@@ -57,7 +91,7 @@ public class MainActivity extends ActionBarActivity {
         listView.setAdapter(storageOptionArrayAdapter);
         new AsyncTask<Void, Void, Boolean>() {
 
-            String fileString = "" ;
+            String fileString = "";
 
             @Override
             protected Boolean doInBackground(Void... params) {
@@ -68,7 +102,7 @@ public class MainActivity extends ActionBarActivity {
                 try {
                     outStream = new FileOutputStream(file1);
                     BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file1));
-                    for(int k =0;k<10;k++){
+                    for (int k = 0; k < 10; k++) {
                         bufferedWriter.write("dheeraj");
                         bufferedWriter.newLine();
                     }
@@ -200,15 +234,148 @@ public class MainActivity extends ActionBarActivity {
         }
 
 
-        for (StorageOption storageOption1 : storageOptionHashSetFinal){
-            if(storageOption1.getName().equals(EXTERNAL_STORAGE)){
+        for (StorageOption storageOption1 : storageOptionHashSetFinal) {
+            if (storageOption1.getName().equals(EXTERNAL_STORAGE)) {
                 String location = storageOption1.getLocation();
-                storageOption1.setLocation(location+File.separator+"Android"+File.separator+"data"+File.separator+context.getPackageName()+File.separator+"files");
+                storageOption1.setLocation(location + File.separator + "Android" + File.separator + "data" + File.separator + context.getPackageName() + File.separator + "files");
             }
         }
 
         return storageOptionHashSetFinal;
 
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        try {
+            turnGPSOnMy();
+            Location mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                    mGoogleApiClient);
+            if (mLastLocation != null) {
+                Geocoder gcd = new Geocoder(getApplicationContext(), Locale.getDefault());
+                List<Address> addresses = gcd.getFromLocation(mLastLocation.getLatitude(), mLastLocation.getLongitude(), 1);
+                if (addresses.size() > 0) {
+                    String k = addresses.get(0).getLocality();
+                    Log.e("", "");
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            Log.e("", "");
+        } finally {
+            turnGPSOff();
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Log.e("", "");
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.e("", "");
+    }
+
+    private ResultCallback<LocationSettingsResult> mResultCallbackFromSettings = new ResultCallback<LocationSettingsResult>() {
+        @Override
+        public void onResult(LocationSettingsResult result) {
+            final Status status = result.getStatus();
+            //final LocationSettingsStates locationSettingsStates = result.getLocationSettingsStates();
+            switch (status.getStatusCode()) {
+                case LocationSettingsStatusCodes.SUCCESS:
+                    // All location settings are satisfied. The client can initialize location
+                    // requests here.
+                    break;
+                case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                    // Location settings are not satisfied. But could be fixed by showing the user
+                    // a dialog.
+                    try {
+                        // Show the dialog by calling startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        status.startResolutionForResult(MainActivity.this,
+                                REQUEST_CHECK_SETTINGS);
+                    } catch (IntentSender.SendIntentException e) {
+                        // Ignore the error.
+                    }
+                    break;
+                case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                    Log.e(TAG, "Settings change unavailable. We have no way to fix the settings so we won't show the dialog.");
+                    break;
+            }
+        }
+    };
+
+    public void turnGPSOnMy() {
+        LocationSettingsRequest.Builder locationSettingsRequestBuilder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(new LocationRequest());
+        PendingResult<LocationSettingsResult> result =
+                LocationServices.SettingsApi.checkLocationSettings(mGoogleApiClient, locationSettingsRequestBuilder.build());
+        result.setResultCallback(mResultCallbackFromSettings);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        //final LocationSettingsStates states = LocationSettingsStates.fromIntent(intent);
+        switch (requestCode) {
+            case REQUEST_CHECK_SETTINGS:
+                switch (resultCode) {
+                    case Activity.RESULT_OK:
+                        // All required changes were successfully made
+                        if (mGoogleApiClient.isConnected() /*&& userMarker == null*/) {
+                            /*startLocationUpdates();*/
+                        }
+                        break;
+                    case Activity.RESULT_CANCELED:
+                        // The user was asked to change settings, but chose not to
+                        break;
+                    default:
+                        break;
+                }
+                break;
+        }
+    }
+
+    public void turnGPSOn() {
+        Intent gpsOptionsIntent = new Intent(
+                android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        startActivity(gpsOptionsIntent);
+        if (true) {
+            return;
+        }
+        try {
+            Intent intent = new Intent("android.location.GPS_ENABLED_CHANGE");
+            intent.putExtra("enabled", true);
+/*
+            sendBroadcast(intent);
+*/
+            String provider = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+            if (!provider.contains("gps")) { //if gps is disabled
+                final Intent poke = new Intent();
+                poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
+                poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+                poke.setData(Uri.parse("3"));
+                sendBroadcast(poke);
+            }
+        } catch (Exception e) {
+            Log.e("", "", e);
+        }
+    }
+
+    // automatic turn off the gps
+    public void turnGPSOff() {
+        try {
+            String provider = Settings.Secure.getString(getContentResolver(), Settings.Secure.LOCATION_PROVIDERS_ALLOWED);
+            if (provider.contains("gps")) { //if gps is enabled
+                final Intent poke = new Intent();
+                poke.setClassName("com.android.settings", "com.android.settings.widget.SettingsAppWidgetProvider");
+                poke.addCategory(Intent.CATEGORY_ALTERNATIVE);
+                poke.setData(Uri.parse("3"));
+                sendBroadcast(poke);
+            }
+        } catch (Exception e) {
+            Log.e("", "", e);
+        }
     }
 
     public static class StorageOption {
@@ -233,7 +400,7 @@ public class MainActivity extends ActionBarActivity {
         }
 
         public String getFreeSpace() {
-            return freeSpace + "(free) /" + totalSpace+" (total)" ;
+            return freeSpace + "(free) /" + totalSpace + " (total)";
         }
 
         public long getTotalSpace() {
